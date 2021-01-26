@@ -1,9 +1,9 @@
 package remix.myplayer.db.room.dao
 
-import android.arch.persistence.room.*
+import androidx.room.*
 import remix.myplayer.db.room.model.PlayList
-import android.arch.persistence.db.SupportSQLiteQuery
-import android.arch.persistence.room.RawQuery
+import androidx.sqlite.db.SupportSQLiteQuery
+import androidx.room.RawQuery
 
 
 
@@ -34,14 +34,14 @@ interface PlayListDao {
     SELECT * FROM PlayList
     WHERE id = :id
   """)
-  fun selectById(id: Int): PlayList?
+  fun selectById(id: Long): PlayList?
 
   @Query("""
     UPDATE PlayList
     SET audioIds = :audioIds
     WHERE id = :playlistId
   """)
-  fun updateAudioIDs(playlistId: Int, audioIds: String): Int
+  fun updateAudioIDs(playlistId: Long, audioIds: String): Int
 
   @Query("""
     UPDATE PlayList
@@ -58,7 +58,7 @@ interface PlayListDao {
     DELETE FROM PlayList
     WHERE id = :id
   """)
-  fun deletePlayList(id: Int): Int
+  fun deletePlayList(id: Long): Int
 
   @Query("""
     DELETE FROM PlayList

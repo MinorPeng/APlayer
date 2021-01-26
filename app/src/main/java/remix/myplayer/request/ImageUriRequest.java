@@ -14,8 +14,9 @@ import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.support.annotation.Nullable;
+import android.provider.MediaStore.Audio.Media;
 import android.text.TextUtils;
+import androidx.annotation.Nullable;
 import com.facebook.common.executors.CallerThreadExecutor;
 import com.facebook.common.references.CloseableReference;
 import com.facebook.common.util.UriUtil;
@@ -68,7 +69,8 @@ public abstract class ImageUriRequest<T> {
   private static final List<String> BLACKLIST = Arrays
       .asList("https://lastfm-img2.akamaized.net/i/u/300x300/7c58a2e3b889af6f923669cc7744c3de.png",
           "https://lastfm-img2.akamaized.net/i/u/300x300/e1d60ddbcaaa6acdcbba960786f11360.png",
-          "http://p1.music.126.net/l8KRlRa-YLNW0GOBeN6fIA==/17914342951434926.jpg");
+          "http://p1.music.126.net/l8KRlRa-YLNW0GOBeN6fIA==/17914342951434926.jpg",
+          "http://p1.music.126.net/RCIIvR7ull5iQWN-awJ-Aw==/109951165555852156.jpg");
 
   private static final String PREFIX_FILE = "file://";
   private static final String PREFIX_EMBEDDED = "embedded://";
@@ -174,12 +176,10 @@ public abstract class ImageUriRequest<T> {
   Observable<String> getCustomThumbObservable(UriRequest request) {
     return Observable.create(emitter -> {
       //是否设置过自定义封面
-      if (request.getSearchType() != URL_ALBUM) {
-        File customImage = ImageUriUtil
-            .getCustomThumbIfExist(request.getID(), request.getSearchType());
-        if (customImage != null && customImage.exists()) {
-          emitter.onNext(PREFIX_FILE + customImage.getAbsolutePath());
-        }
+      File customImage = ImageUriUtil
+          .getCustomThumbIfExist(request.getId(), request.getSearchType());
+      if (customImage != null && customImage.exists()) {
+        emitter.onNext(PREFIX_FILE + customImage.getAbsolutePath());
       }
       emitter.onComplete();
     });
@@ -194,35 +194,38 @@ public abstract class ImageUriRequest<T> {
       if (request.getSearchType() == URL_ALBUM) {//专辑封面
         //忽略多媒体缓存
         if (IGNORE_MEDIA_STORE) {
-          final String selection = TextUtils.isEmpty(request.getTitle()) ?
-              MediaStore.Audio.Media.ALBUM_ID + "=" + request.getID() :
-              MediaStore.Audio.Media.ALBUM_ID + "=" + request.getID() + " and " +
-                  MediaStore.Audio.Media.TITLE + "=?";
-          final String[] selectionValues = TextUtils.isEmpty(request.getTitle()) ?
-              null :
-              new String[]{request.getTitle()};
+          String selection;
+          String[] selectionValues;
+
+          if (request.getSongId() > 0) {
+            selection = Media._ID + "=" + request.getSongId();
+            selectionValues = null;
+          } else {
+            selection = TextUtils.isEmpty(request.getTitle()) ?
+                MediaStore.Audio.Media.ALBUM_ID + "=" + request.getId() :
+                MediaStore.Audio.Media.ALBUM_ID + "=" + request.getId() + " and " +
+                    MediaStore.Audio.Media.TITLE + "=?";
+            selectionValues = TextUtils.isEmpty(request.getTitle()) ?
+                null :
+                new String[]{request.getTitle()};
+          }
 
           List<Song> songs = MediaStoreUtil.getSongs(selection, selectionValues);
           if (songs.size() > 0) {
-//                        imageUrl = resolveEmbeddedPicture(songs.get(0));
             imageUrl = PREFIX_EMBEDDED + songs.get(0).getUrl();
+
           }
         } else {
-          Uri uri;
-          if (request.getSongId() > 0) {
-            uri = Uri
-                .parse("content://media/external/audio/media/" + request.getSongId() + "/albumart");
-          } else {
-            uri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart/"),
-                request.getID());
-          }
+          Uri uri = ContentUris
+              .withAppendedId(Uri.parse("content://media/external/audio/albumart/"),
+                  request.getId());
           if (ImageUriUtil.isAlbumThumbExistInMediaCache(uri)) {
             imageUrl = uri.toString();
           }
         }
 
       } else {//艺术家封面
-        imageUrl = ImageUriUtil.getArtistArt(request.getID());
+        imageUrl = ImageUriUtil.getArtistArt(request.getId());
       }
       if (!TextUtils.isEmpty(imageUrl)) {
         observer.onNext(imageUrl);
@@ -366,14 +369,14 @@ public abstract class ImageUriRequest<T> {
     if (request.getNeteaseType() == TYPE_NETEASE_SONG) {
       //搜索的是歌曲
       NSongSearchResponse response = new Gson().fromJson(body.string(), NSongSearchResponse.class);
-      if (response.result.songs.get(0).score >= 60) {
-        imageUrl = response.result.songs.get(0).album.picUrl;
+      if (response.getResult().getSongs().get(0).getScore() >= 60) {
+        imageUrl = response.getResult().getSongs().get(0).getAlbum().getPicUrl();
       }
     } else if (request.getNeteaseType() == TYPE_NETEASE_ALBUM) {
       //搜索的是专辑
       NAlbumSearchResponse response = new Gson()
           .fromJson(body.string(), NAlbumSearchResponse.class);
-      imageUrl = response.result.albums.get(0).picUrl;
+      imageUrl = response.getResult().getAlbums().get(0).getPicUrl();
     } else if (request.getNeteaseType() == TYPE_NETEASE_ARTIST) {
       //搜索的是艺术家
       NArtistSearchResponse response = new Gson()
@@ -387,6 +390,38 @@ public abstract class ImageUriRequest<T> {
     return imageUrl;
   }
 
+  protected Observable<Bitmap> getThumbBitmapObservable(final Uri uri) {
+    if (uri == null) {
+      return Observable.error(new Throwable("uri is null"));
+    }
+
+    return Observable.create(emitter -> {
+      ImageRequest imageRequest =
+          ImageRequestBuilder.newBuilderWithSource(uri)
+              .setResizeOptions(new ResizeOptions(mConfig.getWidth(), mConfig.getHeight()))
+              .build();
+      DataSource<CloseableReference<CloseableImage>> dataSource = Fresco.getImagePipeline()
+          .fetchDecodedImage(imageRequest, App.getContext());
+      dataSource.subscribe(new BaseBitmapDataSubscriber() {
+        @Override
+        protected void onNewResultImpl(Bitmap bitmap) {
+//                            Bitmap result = copy(bitmap);
+          if (bitmap == null) {
+            bitmap = BitmapFactory
+                .decodeResource(App.getContext().getResources(), R.drawable.album_empty_bg_day);
+          }
+          emitter.onNext(bitmap);
+          emitter.onComplete();
+        }
+
+        @Override
+        protected void onFailureImpl(
+            DataSource<CloseableReference<CloseableImage>> dataSource) {
+          emitter.onError(dataSource.getFailureCause());
+        }
+      }, CallerThreadExecutor.getInstance());
+    });
+  }
 
   protected Observable<Bitmap> getThumbBitmapObservable(UriRequest request) {
     return getCoverObservable(request)

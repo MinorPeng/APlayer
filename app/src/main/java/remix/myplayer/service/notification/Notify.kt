@@ -7,15 +7,15 @@ import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
-import android.support.annotation.RequiresApi
-import android.support.v4.app.TaskStackBuilder
+import androidx.annotation.RequiresApi
+import androidx.core.app.TaskStackBuilder
 import io.reactivex.disposables.Disposable
 import remix.myplayer.R
 import remix.myplayer.service.Command
 import remix.myplayer.service.MusicService
 import remix.myplayer.service.MusicService.Companion.EXTRA_CONTROL
+import remix.myplayer.service.MusicService.Companion.EXTRA_SONG
 import remix.myplayer.ui.activity.PlayerActivity
 
 /**
@@ -24,6 +24,9 @@ import remix.myplayer.ui.activity.PlayerActivity
 
 abstract class Notify internal constructor(internal var service: MusicService) {
   protected var disposable: Disposable? = null
+
+  protected val FLAG_ALWAYS_SHOW_TICKER = 0x1000000
+  protected val FLAG_ONLY_UPDATE_TICKER = 0x2000000
 
   private val notificationManager: NotificationManager by lazy {
     service.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -34,6 +37,7 @@ abstract class Notify internal constructor(internal var service: MusicService) {
   internal val contentIntent: PendingIntent
     get() {
       val result = Intent(service, PlayerActivity::class.java)
+      result.putExtra(EXTRA_SONG, service.currentSong)
 
       val stackBuilder = TaskStackBuilder.create(service)
       stackBuilder.addParentStack(PlayerActivity::class.java)
@@ -64,6 +68,8 @@ abstract class Notify internal constructor(internal var service: MusicService) {
   }
 
   abstract fun updateForPlaying()
+
+  abstract fun updateWithLyric(lrc: String)
 
   internal fun pushNotify(notification: Notification) {
     if (service.stop)

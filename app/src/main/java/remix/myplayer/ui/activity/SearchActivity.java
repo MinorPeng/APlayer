@@ -11,11 +11,11 @@ import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.SearchView;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -73,7 +73,7 @@ public class SearchActivity extends LibraryActivity<Song, SearchAdapter> impleme
     mAdapter.setOnItemClickListener(new OnItemClickListener() {
       @Override
       public void onItemClick(View view, int position) {
-        if (mAdapter != null && mAdapter.getDatas() != null) {
+        if (mAdapter != null && mAdapter.getDatas() != null && position >= 0 && position < mAdapter.getDatas().size()) {
           sendLocalBroadcast(makeCmdIntent(Command.PLAY_TEMP)
               .putExtra(EXTRA_SONG, mAdapter.getDatas().get(position)));
         } else {

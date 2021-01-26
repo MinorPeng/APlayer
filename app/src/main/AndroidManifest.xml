@@ -27,6 +27,7 @@
     android:name=".App"
     android:supportsRtl="true"
     android:theme="@style/AppTheme"
+    android:requestLegacyExternalStorage="true"
     android:networkSecurityConfig="@xml/network_security_config">
 
     <meta-data
@@ -36,7 +37,8 @@
     <!-- 主页面 -->
     <activity
       android:name=".ui.activity.MainActivity"
-      android:theme="@style/ActivityStyle">
+      android:theme="@style/ActivityStyle"
+      android:launchMode="singleTask">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
         <action android:name="android.intent.action.MUSIC_PLAYER"/>
@@ -118,9 +120,6 @@
       android:theme="@style/ActivityStyle"/>
     <!-- 反馈 -->
     <!-- 扫描大小设置 -->
-    <activity
-      android:name=".ui.activity.ScanActivity"
-      android:theme="@style/ActivityStyle"/>
     <!-- 均衡器 -->
     <activity
       android:name=".ui.activity.EQActivity"
@@ -238,7 +237,7 @@
       android:authorities="${applicationId}.fileprovider"
       android:exported="false"
       android:grantUriPermissions="true"
-      android:name="android.support.v4.content.FileProvider">
+      android:name="androidx.core.content.FileProvider">
       <meta-data
         android:name="android.support.FILE_PROVIDER_PATHS"
         android:resource="@xml/provider_paths"/>

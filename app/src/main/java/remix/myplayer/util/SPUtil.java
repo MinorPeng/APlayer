@@ -98,8 +98,12 @@ public class SPUtil {
     //歌词搜索优先级
     String PRIORITY_LYRIC = "priority_lyric";
     String DEFAULT_PRIORITY = new Gson().toJson(Arrays
-            .asList(LyricPriority.KUGOU, LyricPriority.NETEASE, LyricPriority.LOCAL,
-                LyricPriority.EMBEDED),
+            .asList(LyricPriority.KUGOU,
+                    LyricPriority.NETEASE,
+                    LyricPriority.QQ,
+                    LyricPriority.LOCAL,
+                    LyricPriority.EMBEDED,
+                    LyricPriority.IGNORE),
         new TypeToken<List<LyricPriority>>() {
         }.getType());
 
@@ -107,6 +111,7 @@ public class SPUtil {
     int LYRIC_IGNORE = LyricPriority.IGNORE.getPriority();
     int LYRIC_NETEASE = LyricPriority.NETEASE.getPriority();
     int LYRIC_KUGOU = LyricPriority.KUGOU.getPriority();
+    int LYRIC_QQ = LyricPriority.QQ.getPriority();
     int LYRIC_LOCAL = LyricPriority.LOCAL.getPriority();
     int LYRIC_EMBEDDED = LyricPriority.EMBEDED.getPriority();
     int LYRIC_MANUAL = LyricPriority.MANUAL.getPriority();
@@ -138,7 +143,7 @@ public class SPUtil {
     //是否自动下载艺术家封面
     String AUTO_DOWNLOAD_ARTIST_COVER = "auto_download_artist_cover";
     //曲库配置
-    String LIBRARY_CATEGORY = "library_category";
+    String LIBRARY = "library_category";
     //锁屏设置
     String LOCKSCREEN = "lockScreen";
     //导航浪变色
@@ -149,6 +154,8 @@ public class SPUtil {
     String ONLINE_LYRIC_FIRST = "online_lyric_first";
     //是否开启桌面歌词
     String DESKTOP_LYRIC_SHOW = "desktop_lyric_show";
+    //是否开启状态栏歌词
+    String STATUSBAR_LYRIC_SHOW = "statusbar_lyric_show";
     //沉浸式状态栏
     String IMMERSIVE_MODE = "immersive_mode";
     //过滤大小
@@ -171,6 +178,8 @@ public class SPUtil {
     String CHILD_PLAYLIST_SONG_SORT_ORDER = "child_playlist_song_sort_order";
     //移除歌曲
     String BLACKLIST_SONG = "black_list_song";
+    //黑名单
+    String BLACKLIST = "blacklist";
     //本地歌词搜索路径
     String LOCAL_LYRIC_SEARCH_DIR = "local_lyric_search_dir";
     //退出时播放时间
@@ -233,8 +242,10 @@ public class SPUtil {
     String MANUAL_SCAN_FOLDER = "manual_scan_folder";
     //导入m3u目录
     String IMPORT_PLAYLIST_FOLDER = "import_playlist_folder";
-    //到处m3u目录
+    //导出m3u目录
     String EXPORT_PLAYLIST_FOLDER = "export_playlist_folder";
+    //自定义播放背景
+    String PLAYER_BACKGROUND = "player_background";
   }
 
   public interface LYRIC_OFFSET_KEY {

@@ -1,22 +1,35 @@
 package remix.myplayer.helper
 
-import android.content.ComponentName
-import android.content.Intent
 import android.os.CountDownTimer
 import remix.myplayer.App
 import remix.myplayer.R
-import remix.myplayer.misc.receiver.ExitReceiver
-import remix.myplayer.util.Constants
 import remix.myplayer.util.ToastUtil
 
 class SleepTimer(millisInFuture: Long, countDownInterval: Long) : CountDownTimer(millisInFuture, countDownInterval) {
+
+  var isFinished = false
+    private set
+
   override fun onFinish() {
-    App.getContext().sendBroadcast(Intent(Constants.EXIT)
-        .setComponent(ComponentName(App.getContext(), ExitReceiver::class.java)))
+    isFinished = true
+    callbacks.forEach {
+      it.onFinish()
+    }
   }
 
   override fun onTick(millisUntilFinished: Long) {
     millisUntilFinish = millisUntilFinished
+  }
+
+  fun revert() {
+    callbacks.forEach {
+      it.revert()
+    }
+  }
+
+  interface Callback {
+    fun onFinish()
+    fun revert()
   }
 
   companion object {
@@ -31,6 +44,8 @@ class SleepTimer(millisInFuture: Long, countDownInterval: Long) : CountDownTimer
 
     @JvmStatic
     private var instance: SleepTimer? = null
+
+    private val callbacks: MutableList<Callback> by lazy { ArrayList<Callback>() }
 
     @JvmStatic
     fun isTicking(): Boolean {
@@ -55,7 +70,12 @@ class SleepTimer(millisInFuture: Long, countDownInterval: Long) : CountDownTimer
         instance?.start()
       } else {
         if (instance != null) {
-          instance?.cancel()
+          val isFinished = instance?.isFinished
+          if (isFinished == true) {
+            instance?.revert()
+          } else {
+            instance?.cancel()
+          }
           instance = null
         }
         millisUntilFinish = 0
@@ -63,6 +83,9 @@ class SleepTimer(millisInFuture: Long, countDownInterval: Long) : CountDownTimer
       ToastUtil.show(context, if (!start) context.getString(R.string.cancel_timer) else context.getString(R.string.will_stop_at_x, Math.ceil((duration / 1000 / 60).toDouble()).toInt()))
     }
 
+    fun addCallback(callback: Callback) {
+      callbacks.add(callback)
+    }
 
   }
 }

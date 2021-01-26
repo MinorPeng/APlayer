@@ -112,8 +112,8 @@
   <string name="timer">伴着音乐入睡</string>
   <string name="as_default">设为默认</string>
   <string name="close">关闭</string>
-  <string name="timer_info_1">“定时停止”时间设为默认</string>
-  <string name="timer_info_2">“定时停止”时间设为默认后，下次点击定时停止按钮后，将直接按之前设置好的时间开始计时。\n\n想要更改“定时停止”的时间，点击两次定时停止按钮即可进入设置页面。</string>
+  <string name="timer_default_info_title">“定时停止”时间设为默认</string>
+  <string name="timer_default_info_content">“定时停止”时间设为默认后，下次点击定时停止按钮后，将直接按之前设置好的时间开始计时。\n\n想要更改“定时停止”的时间，点击两次定时停止按钮即可进入设置页面。</string>
   <string name="input_feedback_content">请填写反馈内容</string>
   <string name="playing">正在播放</string>
   <string name="set_filter_size">设置过滤文件大小</string>
@@ -168,7 +168,7 @@
   <string name="system_lockscreen">系统锁屏</string>
   <string name="aplayer_lockscreen_tip">锁屏页会显示当前歌曲的封面,样式取决于APlayer</string>
   <string name="system_lockscreen_tip">锁屏页会显示当前歌曲的封面,样式取决于你的系统</string>
-  <string name="lockscreen_off_tip">锁屏页将不会显示歌曲封面</string>
+  <string name="lockscreen_off_tip">锁屏页将不会显示歌曲封面(某些特性可能无法使用)</string>
 
   <string name="choose_or_close_lockscreen">选择锁屏显示方式或者关闭锁屏</string>
   <string name="cant_play_this_sont">无法播放该歌曲</string>
@@ -208,6 +208,7 @@
   <string name="closed_desktop_lrc">已关闭桌面歌词</string>
   <string name="opened_desktop_lrc">已开启桌面歌词</string>
   <string name="confirm_ignore_lrc">确认忽略歌词?</string>
+  <string name="statusbar_lrc">状态栏歌词</string>
   <string name="confirm_cancel_ignore_lrc">确认取消忽略歌词?</string>
   <string name="ignore_lrc">忽略歌词</string>
   <string name="cancel_ignore_lrc">取消忽略歌词</string>
@@ -335,7 +336,8 @@
   <string name="export_fail">导出失败:%s</string>
   <string name="export_success">导出成功</string>
   <string name="cover_download_source">封面下载源</string>
-  <string name="cover_download_source_tip">默认从LastFM下载</string>
+  <string name="cover_download_from_lastfm">从LastFm下载</string>
+  <string name="cover_download_from_netease">从网易下载</string>
   <string name="update_notification">更新通知</string>
   <string name="update_notification_description">更新通知用于展示下载进度</string>
   <string name="downloading">下载中</string>
@@ -369,7 +371,7 @@
   <string name="restore_songs">歌曲恢复</string>
   <string name="restore_songs_tip">恢复从曲库移除的歌曲</string>
   <string name="alread_restore_songs">已经恢复被移除的歌曲</string>
-  <string name="speed_range_tip">输入范围为0.5-1.5</string>
+  <string name="speed_range_tip">输入范围为0.5-2</string>
   <string name="show_displayname">歌曲列表显示文件名</string>
   <string name="show_displayname_tip">如果歌曲列表出现乱码可尝试开启该选项</string>
   <string name="accent_color">强调色</string>
@@ -391,7 +393,8 @@
   <string name="select_language_tips">将强制设置软件的语言</string>
 
   <string name="auto">跟随系统</string>
-  <string name="zh">简体中文</string>
+  <string name="zh_simple">简体中文</string>
+  <string name="zh_traditional">繁体中文</string>
   <string name="english">英文</string>
 
   <string name="bass_boost">低音增强</string>
@@ -408,4 +411,18 @@
   <string name="deleting">删除中</string>
   <string name="adding">添加中</string>
   <string name="send_log">是否同时发送日志?</string>
+  <string name="clear">清除</string>
+  <string name="add">添加</string>
+  <string name="clear_blacklist_title">清除黑名单</string>
+  <string name="clear_blacklist_content">确定清除黑名单吗?</string>
+  <string name="blacklist">黑名单</string>
+  <string name="remove_from_blacklist">从黑名单移除</string>
+  <string name="do_you_want_remove_from_blacklist">你想从黑名单移除%s吗?</string>
+  <string name="blacklist_tip">这些文件夹中的内容将会从您的媒体库中隐藏</string>
+  <string name="yes">是</string>
+  <string name="no">否</string>
+  <string name="now_playing_screen_background">播放界面背景</string>
+  <string name="now_playing_screen_theme">跟随主题</string>
+  <string name="now_playing_screen_cover">跟随专辑封面</string>
+  <string name="now_playing_screen_custom">自定义</string>
 </resources>

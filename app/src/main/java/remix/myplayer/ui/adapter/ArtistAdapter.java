@@ -5,16 +5,15 @@ import static remix.myplayer.request.ImageUriRequest.SMALL_IMAGE_SIZE;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.PopupMenu;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.PopupMenu;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import butterknife.BindView;
 import com.facebook.drawee.view.SimpleDraweeView;
@@ -86,7 +85,7 @@ public class ArtistAdapter extends HeaderAdapter<Artist, BaseViewHolder> impleme
     final ArtistHolder holder = (ArtistHolder) baseHolder;
     //设置歌手名
     holder.mText1.setText(artist.getArtist());
-    final int artistId = artist.getArtistID();
+    final long artistId = artist.getArtistID();
     if (holder instanceof ArtistListHolder && holder.mText2 != null) {
       if (artist.getCount() > 0) {
         holder.mText2.setText(context.getString(R.string.song_count_1, artist.getCount()));

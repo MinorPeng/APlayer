@@ -20,9 +20,11 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Parcelable;
 import android.os.Vibrator;
-import android.support.annotation.NonNull;
-import android.support.v4.content.FileProvider;
-import android.support.v4.content.LocalBroadcastManager;
+import android.provider.Settings;
+import androidx.annotation.NonNull;
+import androidx.core.content.FileProvider;
+import androidx.core.text.HtmlCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.widget.Toast;
 import java.io.BufferedReader;
@@ -36,6 +38,7 @@ import java.util.List;
 import remix.myplayer.App;
 import remix.myplayer.R;
 import remix.myplayer.bean.mp3.Song;
+import remix.myplayer.misc.floatpermission.rom.RomUtils;
 import timber.log.Timber;
 
 /**
@@ -590,5 +593,21 @@ public class Util {
       }
     }
     return null;
+  }
+
+  /**
+   * 判断是否支持状态栏歌词
+   */
+  public static boolean isSupportStatusBarLyric(Context context) {
+    return RomUtils.checkIsMeizuRom() || Settings.System.getInt(context.getContentResolver(), "status_bar_show_lyric", 0) != 0;
+  }
+
+  /**
+   * HTML 转纯文本
+   *
+   * 用于处理 QQ 歌词中的“&apos;”等
+   */
+  public static String htmlToText(String source) {
+    return HtmlCompat.fromHtml(source, HtmlCompat.FROM_HTML_MODE_LEGACY).toString();
   }
 }

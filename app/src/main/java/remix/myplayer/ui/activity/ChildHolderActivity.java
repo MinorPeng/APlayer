@@ -9,11 +9,11 @@ import android.content.Intent;
 import android.content.Loader;
 import android.os.Bundle;
 import android.os.Message;
-import android.support.annotation.NonNull;
-import android.support.annotation.WorkerThread;
-import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.NonNull;
+import androidx.annotation.WorkerThread;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.appcompat.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.View;
@@ -30,6 +30,7 @@ import remix.myplayer.R;
 import remix.myplayer.bean.mp3.Song;
 import remix.myplayer.db.room.DatabaseRepository;
 import remix.myplayer.db.room.model.PlayList;
+import remix.myplayer.helper.MusicServiceRemote;
 import remix.myplayer.helper.SortOrder;
 import remix.myplayer.misc.asynctask.AppWrappedAsyncTaskLoader;
 import remix.myplayer.misc.handler.MsgHandler;
@@ -40,6 +41,7 @@ import remix.myplayer.service.Command;
 import remix.myplayer.service.MusicService;
 import remix.myplayer.theme.ThemeStore;
 import remix.myplayer.ui.adapter.ChildHolderAdapter;
+import remix.myplayer.ui.fragment.BottomActionBarFragment;
 import remix.myplayer.ui.misc.MultipleChoice;
 import remix.myplayer.ui.widget.fastcroll_recyclerview.FastScrollRecyclerView;
 import remix.myplayer.util.ColorUtil;
@@ -60,7 +62,7 @@ public class ChildHolderActivity extends LibraryActivity<Song, ChildHolderAdapte
 
   public final static String TAG = ChildHolderActivity.class.getSimpleName();
   //获得歌曲信息列表的参数
-  private int mId;
+  private long mId;
   private int mType;
   private String mArg;
 
@@ -88,7 +90,7 @@ public class ChildHolderActivity extends LibraryActivity<Song, ChildHolderAdapte
     mRefreshHandler = new MsgHandler(this);
 
     //参数id，类型，标题
-    mId = getIntent().getIntExtra(EXTRA_ID, -1);
+    mId = getIntent().getLongExtra(EXTRA_ID, -1);
     mType = getIntent().getIntExtra(EXTRA_TYPE, -1);
     mArg = getIntent().getStringExtra(EXTRA_TITLE);
     if (mId == -1 || mType == -1 || TextUtils.isEmpty(mArg)) {
@@ -108,14 +110,23 @@ public class ChildHolderActivity extends LibraryActivity<Song, ChildHolderAdapte
       @Override
       public void onItemClick(View view, int position) {
         final Song song = mAdapter.getDatas().get(position);
-        if (!mChoice.click(position, song)) {
-          final List<Song> songs = mAdapter.getDatas();
-          if (songs.size() == 0) {
-            return;
+
+        if (MusicServiceRemote.isPlaying() && song.equals(MusicServiceRemote.getCurrentSong())) {
+          final BottomActionBarFragment bottomActionBarFragment = (BottomActionBarFragment) getSupportFragmentManager()
+              .findFragmentByTag("BottomActionBarFragment");
+          if (bottomActionBarFragment != null) {
+            bottomActionBarFragment.startPlayerActivity();
           }
-          //设置正在播放列表
-          setPlayQueue(songs, makeCmdIntent(Command.PLAYSELECTEDSONG)
-              .putExtra(EXTRA_POSITION, position));
+        } else {
+          if (!mChoice.click(position, song)) {
+            final List<Song> songs = mAdapter.getDatas();
+            if (songs.size() == 0) {
+              return;
+            }
+            //设置正在播放列表
+            setPlayQueue(songs, makeCmdIntent(Command.PLAYSELECTEDSONG)
+                .putExtra(EXTRA_POSITION, position));
+          }
         }
       }
 
@@ -276,7 +287,7 @@ public class ChildHolderActivity extends LibraryActivity<Song, ChildHolderAdapte
    * @return 对应歌曲信息列表
    */
   @WorkerThread
-  private List<Song> getMP3List() {
+  private List<Song> getSongs() {
     if (mId < 0) {
       return null;
     }
@@ -351,7 +362,7 @@ public class ChildHolderActivity extends LibraryActivity<Song, ChildHolderAdapte
   private static final String EXTRA_TYPE = "type";
   private static final String EXTRA_TITLE = "title";
 
-  public static void start(Context context, int type, int id, String title) {
+  public static void start(Context context, int type, long id, String title) {
     context.startActivity(new Intent(context, ChildHolderActivity.class)
         .putExtra(EXTRA_ID, id)
         .putExtra(EXTRA_TYPE, type)
@@ -377,7 +388,7 @@ public class ChildHolderActivity extends LibraryActivity<Song, ChildHolderAdapte
       final ChildHolderActivity activity = mRef.get();
       List<Song> songs = new ArrayList<>();
       if (activity != null) {
-        songs = activity.getMP3List();
+        songs = activity.getSongs();
       }
       return songs != null ? songs : new ArrayList<>();
     }

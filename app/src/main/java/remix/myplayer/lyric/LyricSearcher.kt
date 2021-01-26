@@ -15,6 +15,8 @@ import remix.myplayer.bean.misc.LyricPriority
 import remix.myplayer.bean.mp3.Song
 import remix.myplayer.bean.netease.NLrcResponse
 import remix.myplayer.bean.netease.NSongSearchResponse
+import remix.myplayer.bean.qq.QLrcResponse
+import remix.myplayer.bean.qq.QSearchResponse
 import remix.myplayer.lyric.bean.LrcRow
 import remix.myplayer.misc.cache.DiskCache
 import remix.myplayer.misc.tageditor.TagEditor
@@ -75,12 +77,13 @@ class LyricSearcher {
     if (song == Song.EMPTY_SONG) {
       return Observable.error(Throwable("empty song"))
     }
+
     val type = SPUtil.getValue(App.getContext(), SPUtil.LYRIC_KEY.NAME, song.id, SPUtil.LYRIC_KEY.LYRIC_DEFAULT)
 
     val observable = when (type) {
       SPUtil.LYRIC_KEY.LYRIC_IGNORE -> {
         Timber.v("ignore lyric")
-        Observable.error(Throwable("ignore lyric"))
+        return Observable.error(Throwable("ignore lyric"))
       }
       SPUtil.LYRIC_KEY.LYRIC_EMBEDDED -> {
         getEmbeddedObservable()
@@ -94,19 +97,27 @@ class LyricSearcher {
       SPUtil.LYRIC_KEY.LYRIC_NETEASE -> {
         getNeteaseObservable()
       }
+      SPUtil.LYRIC_KEY.LYRIC_QQ -> {
+        getQQObservable()
+      }
       SPUtil.LYRIC_KEY.LYRIC_MANUAL -> {
         getManualObservable(manualPath)
       }
       SPUtil.LYRIC_KEY.LYRIC_DEFAULT -> {
-        //默认优先级排序 酷狗-网易-本地-内嵌
+        //默认优先级排序 酷狗-网易-QQ-本地-内嵌-忽略
+
         val priority = Gson().fromJson<List<LyricPriority>>(SPUtil.getValue(App.getContext(), SPUtil.LYRIC_KEY.NAME, SPUtil.LYRIC_KEY.PRIORITY_LYRIC, SPUtil.LYRIC_KEY.DEFAULT_PRIORITY),
             object : TypeToken<List<LyricPriority>>() {}.type)
+        if (priority.firstOrNull() == LyricPriority.IGNORE) {
+          return Observable.error(Throwable("ignore lyric"))
+        }
 
         val observables = mutableListOf<Observable<List<LrcRow>>>()
         priority.forEach {
           when (it.priority) {
             LyricPriority.KUGOU.priority -> observables.add(getKuGouObservable())
             LyricPriority.NETEASE.priority -> observables.add(getNeteaseObservable())
+            LyricPriority.QQ.priority -> observables.add(getQQObservable())
             LyricPriority.LOCAL.priority -> observables.add(getLocalObservable())
             LyricPriority.EMBEDED.priority -> observables.add(getEmbeddedObservable())
           }
@@ -202,6 +213,9 @@ class LyricSearcher {
         getLocalSearchKey(),
         null)
         .use { filesCursor ->
+          if (filesCursor == null) {
+            return ""
+          }
           while (filesCursor.moveToNext()) {
             val file = File(filesCursor.getString(filesCursor.getColumnIndex(MediaStore.Files.FileColumns.DATA)))
             Timber.v("file: %s", file.absolutePath)
@@ -217,20 +231,20 @@ class LyricSearcher {
   /**
    * @param searchPath 设置的本地歌词搜索路径
    * 本地歌词搜索的关键字
+   * artist-displayName.lrc
    * displayName.lrc
    * title.lrc
    * title-artist.lrc
    * displayname-artist.lrc
    * artist-title.lrc
-   * aritst-displayName.lrc
    */
   private fun getLocalSearchKey(searchPath: String? = null): Array<String> {
-    return arrayOf("%$displayName$SUFFIX_LYRIC",
+    return arrayOf("%${song.artist}%$displayName$SUFFIX_LYRIC",
+        "%$displayName$SUFFIX_LYRIC",
         "%${song.title}$SUFFIX_LYRIC",
         "%${song.title}%${song.artist}$SUFFIX_LYRIC",
         "%${song.displayName}%${song.artist}$SUFFIX_LYRIC",
-        "%${song.artist}%${song.title}$SUFFIX_LYRIC",
-        "%${song.artist}%$displayName$SUFFIX_LYRIC")
+        "%${song.artist}%${song.title}$SUFFIX_LYRIC")
   }
 
   /**
@@ -288,13 +302,13 @@ class LyricSearcher {
         .getNeteaseSearch(searchKey, 0, 1, 1)
         .flatMap {
           HttpClient.getInstance()
-              .getNeteaseLyric(Gson().fromJson(it.string(), NSongSearchResponse::class.java).result.songs[0].id)
+              .getNeteaseLyric(Gson().fromJson(it.string(), NSongSearchResponse::class.java)?.result?.songs?.get(0)?.id ?: 0)
               .map {
                 val lrcResponse = Gson().fromJson(it.string(), NLrcResponse::class.java)
-                val combine = lrcParser.getLrcRows(getBufferReader(lrcResponse.lrc.lyric.toByteArray()), false, cacheKey, searchKey)
+                val combine = lrcParser.getLrcRows(getBufferReader(lrcResponse.lrc?.lyric?.toByteArray() ?: "".toByteArray()), false, cacheKey, searchKey)
                 if (isCN && lrcResponse.tlyric != null && !lrcResponse.tlyric.lyric.isNullOrEmpty()) {
                   val translate = lrcParser.getLrcRows(getBufferReader(lrcResponse.tlyric.lyric.toByteArray()), false, cacheKey, searchKey)
-                  if (translate != null && translate.size > 0) {
+                  if (translate.isNotEmpty()) {
                     for (i in translate.indices) {
                       for (j in combine.indices) {
                         if (translate[i].time == combine[j].time) {
@@ -322,7 +336,7 @@ class LyricSearcher {
     return HttpClient.getInstance().getKuGouSearch(searchKey, song.getDuration(), "")
         .flatMap { body ->
           val searchResponse = Gson().fromJson(body.string(), KSearchResponse::class.java)
-          if (searchResponse.candidates.isNotEmpty() && song.title.equals(searchResponse.candidates[0].song,true)) {
+          if (searchResponse.candidates.isNotEmpty() && song.title.equals(searchResponse.candidates[0].song, true)) {
             HttpClient.getInstance().getKuGouLyric(
                 searchResponse.candidates[0].id,
                 searchResponse.candidates[0].accesskey)
@@ -330,6 +344,49 @@ class LyricSearcher {
                   val lrcResponse = Gson().fromJson(lrcBody.string(), KLrcResponse::class.java)
                   Timber.v("KugouLyric")
                   lrcParser.getLrcRows(getBufferReader(Base64.decode(lrcResponse.content, Base64.DEFAULT)), true, cacheKey, searchKey)
+                }
+          } else {
+            Observable.empty()
+          }
+        }
+        .onErrorResumeNext(Function {
+          Observable.empty()
+        })
+  }
+
+  /**
+   * QQ歌词
+   */
+  private fun getQQObservable(): Observable<List<LrcRow>> {
+    return HttpClient.getInstance().getQQSearch(searchKey)
+        .flatMap { body ->
+          val searchResponse = Gson().fromJson(body.string(), QSearchResponse::class.java)
+          if (song.title.equals(searchResponse.data.song.list[0].songname, true)) {
+            HttpClient.getInstance().getQQLyric(searchResponse.data.song.list[0].songmid)
+                .map { lrcBody ->
+                  val lrcResponse = Gson().fromJson(lrcBody.string(), QLrcResponse::class.java)
+                  val combine = lrcParser.getLrcRows(getBufferReader(lrcResponse.lyric.toByteArray()), false, cacheKey, searchKey)
+                  combine.forEach {
+                    it.content = Util.htmlToText(it.content)
+                  }
+                  if (lrcResponse.trans.isNotEmpty()) {
+                    val translate = lrcParser.getLrcRows(getBufferReader(lrcResponse.trans.toByteArray()), false, cacheKey, searchKey)
+                    if (isCN && translate.size > 0) {
+                      translate.forEach {
+                        if (it.content.isNotEmpty() && it.content != "//") {
+                          for (i in combine.indices) {
+                            if (it.time == combine[i].time) {
+                              combine[i].translate = Util.htmlToText(it.content)
+                              break
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                  Timber.v("QQLyric")
+                  lrcParser.saveLrcRows(combine, cacheKey, searchKey)
+                  combine
                 }
           } else {
             Observable.empty()

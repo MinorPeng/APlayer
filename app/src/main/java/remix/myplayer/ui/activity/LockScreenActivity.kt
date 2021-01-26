@@ -5,7 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
-import android.support.v7.graphics.Palette
+import androidx.palette.graphics.Palette
 import android.util.DisplayMetrics
 import android.view.MotionEvent
 import android.view.View
@@ -22,8 +22,8 @@ import remix.myplayer.helper.MusicServiceRemote
 import remix.myplayer.lyric.LyricFetcher
 import remix.myplayer.lyric.LyricFetcher.Companion.LYRIC_FIND_INTERVAL
 import remix.myplayer.lyric.bean.LyricRowWrapper
-import remix.myplayer.lyric.bean.LyricRowWrapper.LYRIC_WRAPPER_NO
-import remix.myplayer.lyric.bean.LyricRowWrapper.LYRIC_WRAPPER_SEARCHING
+import remix.myplayer.lyric.bean.LyricRowWrapper.Companion.LYRIC_WRAPPER_NO
+import remix.myplayer.lyric.bean.LyricRowWrapper.Companion.LYRIC_WRAPPER_SEARCHING
 import remix.myplayer.misc.menu.CtrlButtonListener
 import remix.myplayer.request.ImageUriRequest
 import remix.myplayer.request.LibraryUriRequest

@@ -15,7 +15,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.text.TextUtils;
 import java.io.File;
 import java.util.ArrayList;
@@ -71,7 +71,7 @@ public class MusicUtil {
       }
     }
 
-    if (songs == null) {
+    if (songs == null || songs.size() == 0) {
       File songFile = null;
       if (uri.getAuthority() != null && uri.getAuthority()
           .equals("com.android.externalstorage.documents")) {

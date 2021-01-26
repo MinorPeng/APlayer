@@ -2,9 +2,9 @@ package remix.myplayer.ui.dialog
 
 import android.app.Dialog
 import android.os.Bundle
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.helper.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.ItemTouchHelper
 import com.google.gson.Gson
 import remix.myplayer.App
 import remix.myplayer.R
@@ -58,10 +58,11 @@ class LyricPriorityDialog : BaseMusicDialog() {
         .onPositive { dialog, which ->
           try {
             DiskCache.getLrcDiskCache().delete()
-            DiskCache.init(App.getContext())
+            DiskCache.init(App.getContext(), "lyric")
             SPUtil.deleteFile(App.getContext(), SPUtil.LYRIC_KEY.NAME)
             SPUtil.putValue(activity, SPUtil.LYRIC_KEY.NAME, SPUtil.LYRIC_KEY.PRIORITY_LYRIC,
                 Gson().toJson(adapter.datas))
+            ToastUtil.show(context, R.string.save_success)
           } catch (e: Exception) {
             ToastUtil.show(context, R.string.save_error_arg, e.message)
           }

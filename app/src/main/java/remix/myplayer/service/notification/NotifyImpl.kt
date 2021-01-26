@@ -5,7 +5,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.support.v4.app.NotificationCompat
+import android.os.Build
+import androidx.core.app.NotificationCompat
 import android.view.View
 import android.widget.RemoteViews
 import remix.myplayer.R
@@ -55,10 +56,10 @@ class NotifyImpl(context: MusicService) : Notify(context) {
     val notification = buildNotification(service, remoteView, remoteBigView)
 
     //设置歌手，歌曲名
-    remoteBigView.setTextViewText(R.id.notify_song, song.title)
+    remoteBigView.setTextViewText(R.id.notify_song, song.showName)
     remoteBigView.setTextViewText(R.id.notify_artist_album, song.artist + " - " + song.album)
 
-    remoteView.setTextViewText(R.id.notify_song, song.title)
+    remoteView.setTextViewText(R.id.notify_song, song.showName)
     remoteView.setTextViewText(R.id.notify_artist_album, song.artist + " - " + song.album)
 
     //非系统背景色 即黑色背景
@@ -167,6 +168,30 @@ class NotifyImpl(context: MusicService) : Notify(context) {
         if (service.isDesktopLyricLocked) Command.UNLOCK_DESKTOP_LYRIC else Command.TOGGLE_DESKTOP_LYRIC)
     remoteBigView.setOnClickPendingIntent(R.id.notify_lyric, lyricIntent)
     remoteView.setOnClickPendingIntent(R.id.notify_lyric, lyricIntent)
+  }
+
+  override fun updateWithLyric(lrc: String) {
+    if (!service.isPlaying) return
+    val song = service.currentSong
+    val builder = NotificationCompat.Builder(service, PLAYING_NOTIFICATION_CHANNEL_ID)
+    builder.setContentText(song.title)
+            .setContentTitle(song.title)
+            .setShowWhen(false)
+            .setTicker(lrc)
+            .setOngoing(service.isPlaying)
+            .setContentIntent(contentIntent)
+            .setSmallIcon(R.drawable.icon_notifbar)
+    val notification = builder.build()
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      notification.extras.putInt("ticker_icon", R.drawable.icon_notifibar_lrc)
+      notification.extras.putBoolean("ticker_icon_switch", false)
+    }
+
+    notification.flags = notification.flags.or(FLAG_ALWAYS_SHOW_TICKER)
+    notification.flags = notification.flags.or(FLAG_ONLY_UPDATE_TICKER)
+
+    pushNotify(notification)
   }
 
 //  private fun tintBitmap(resId: Int, color: Int?): Bitmap {

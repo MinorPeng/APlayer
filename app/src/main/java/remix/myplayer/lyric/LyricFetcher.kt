@@ -4,10 +4,10 @@ import io.reactivex.disposables.Disposable
 import remix.myplayer.App
 import remix.myplayer.bean.mp3.Song
 import remix.myplayer.lyric.bean.LrcRow
-import remix.myplayer.lyric.bean.LrcRow.LYRIC_EMPTY_ROW
+import remix.myplayer.lyric.bean.LrcRow.Companion.LYRIC_EMPTY_ROW
 import remix.myplayer.lyric.bean.LyricRowWrapper
-import remix.myplayer.lyric.bean.LyricRowWrapper.LYRIC_WRAPPER_NO
-import remix.myplayer.lyric.bean.LyricRowWrapper.LYRIC_WRAPPER_SEARCHING
+import remix.myplayer.lyric.bean.LyricRowWrapper.Companion.LYRIC_WRAPPER_NO
+import remix.myplayer.lyric.bean.LyricRowWrapper.Companion.LYRIC_WRAPPER_SEARCHING
 import remix.myplayer.service.MusicService
 import remix.myplayer.util.SPUtil
 import timber.log.Timber
@@ -22,8 +22,8 @@ class LyricFetcher(service: MusicService) {
   private val lrcRows = CopyOnWriteArrayList<LrcRow>()
   private val reference: WeakReference<MusicService> = WeakReference(service)
   private var disposable: Disposable? = null
-  private var song: Song = Song.EMPTY_SONG
   private var status = Status.SEARCHING
+  var song: Song = Song.EMPTY_SONG
   var offset = 0
   private val lyricSearcher = LyricSearcher()
 
@@ -69,18 +69,13 @@ class LyricFetcher(service: MusicService) {
             return wrapper
           }
         }
-
         return wrapper
-
       }
-
       else -> {
         return LYRIC_WRAPPER_NO
       }
     }
-
   }
-
 
   fun updateLyricRows(song: Song) {
     this.song = song
@@ -100,11 +95,15 @@ class LyricFetcher(service: MusicService) {
           status = Status.SEARCHING
         }
         .subscribe({
+//          Timber.v("updateLyricRows, lrc: $it")
           if (id == song.id) {
             status = Status.NORMAL
             offset = SPUtil.getValue(App.getContext(), SPUtil.LYRIC_OFFSET_KEY.NAME, id.toString(), 0)
             lrcRows.clear()
             lrcRows.addAll(it)
+          } else {
+            lrcRows.clear()
+            status = Status.NO
           }
         }, { throwable ->
           Timber.v(throwable)
